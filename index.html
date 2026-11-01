@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O ÚLTIMO SINAL — AB GAMES</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#05080d;color:white;font-family:Arial;overflow:hidden}
+canvas{display:block;width:100vw;height:100vh}
+#hud{position:fixed;top:18px;left:20px;z-index:2;text-shadow:0 2px 8px black}
+#hud h1{font-size:22px;letter-spacing:3px;margin:0;color:#b9d8e8}
+#hud p{font-size:12px;color:#c3cbd0}
+#help{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#07101dcc;padding:12px 18px;border:1px solid #60788766;border-radius:8px;text-align:center;font-size:13px}
+#start{position:fixed;inset:0;background:#02060bdc;display:flex;align-items:center;justify-content:center;z-index:5;text-align:center}
+#start div{padding:25px}
+#start h2{font-size:34px;letter-spacing:5px;color:#c6e6f5}
+button{background:#18384b;color:white;border:1px solid #8ab4c9;padding:14px 28px;border-radius:5px;font-size:16px;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+<h1>O ÚLTIMO SINAL</h1>
+<p>AB GAMES apresenta...</p>
+</div>
+
+<div id="help">W A S D — MOVIMENTAR | ESC — PAUSAR</div>
+
+<div id="start">
+<div>
+<h2>O ÚLTIMO SINAL</h2>
+<p>Uma cidade abandonada. Um sinal misterioso.</p>
+<p>Você está sozinho nesta rua...</p>
+<button onclick="startGame()">ENTRAR NA CIDADE</button>
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let w,h,started=false;
+let pos=0,side=0;
+const keys={};
+
+function resize(){
+w=canvas.width=innerWidth;
+h=canvas.height=innerHeight;
+}
+addEventListener("resize",resize);
+resize();
+
+addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+if(e.key==="Escape"&&started){
+started=false;
+document.getElementById("start").style.display="flex";
+}
+});
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function startGame(){
+started=true;
+document.getElementById("start").style.display="none";
+}
+
+function polygon(points,color){
+ctx.fillStyle=color;
+ctx.beginPath();
+ctx.moveTo(points[0][0],points[0][1]);
+for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+ctx.closePath();
+ctx.fill();
+}
+
+function drawBuilding(x,scale,left){
+let base=h*.64;
+let bw=w*.22*scale;
+let bh=h*.48*scale;
+let bx=x-bw/2;
+let by=base-bh;
+let wall=left?"#171d20":"#202326";
+polygon([[bx,by],[bx+bw,by],[bx+bw,base],[bx,base]],wall);
+polygon([[bx,by],[bx+bw*.18,by-bh*.13],[bx+bw*1.18,by-bh*.13],[bx+bw,by]],"#101619");
+polygon([[bx+bw,by],[bx+bw*1.18,by-bh*.13],[bx+bw*1.18,base-bh*.13],[bx+bw,base]],"#111719");
+for(let i=0;i<3;i++){
+let wx=bx+bw*(.18+i*.3);
+let wy=by+bh*.28;
+ctx.fillStyle="#080e12";
+ctx.fillRect(wx,wy,bw*.13,bh*.2);
+ctx.fillStyle="#26343a";
+ctx.fillRect(wx+2,wy+2,bw*.13-4,bh*.2-4);
+}
+polygon([[bx+bw*.4,base-bh*.3],[bx+bw*.62,base-bh*.3],[bx+bw*.62,base],[bx+bw*.4,base]],"#080b0d");
+}
+
+function drawLamp(x,scale){
+let top=h*.24;
+let bottom=h*.66;
+ctx.strokeStyle="#11191d";
+ctx.lineWidth=Math.max(2,5*scale);
+ctx.beginPath();
+ctx.moveTo(x,bottom);
+ctx.lineTo(x,top);
+ctx.lineTo(x+w*.035*scale,top);
+ctx.stroke();
+ctx.fillStyle="#a6b9b9";
+ctx.fillRect(x+w*.025*scale,top-3,12*scale,6*scale);
+ctx.fillStyle="#d4e2ce";
+ctx.globalAlpha=.55;
+ctx.beginPath();
+ctx.arc(x+w*.03*scale,top,30*scale,0,Math.PI*2);
+ctx.fill();
+ctx.globalAlpha=1;
+}
+
+function draw(){
+ctx.fillStyle="#080e15";
+ctx.fillRect(0,0,w,h);
+
+// céu
+let sky=ctx.createLinearGradient(0,0,0,h*.7);
+sky.addColorStop(0,"#050a12");
+sky.addColorStop(1,"#26333a");
+ctx.fillStyle=sky;
+ctx.fillRect(0,0,w,h*.7);
+
+// chão
+polygon([[0,h*.58],[w,h*.58],[w,h],[0,h]],"#252a29");
+
+// rua em perspectiva
+polygon([[w*.43,h*.58],[w*.57,h*.58],[w*.95,h],[w*.05,h]],"#171c1e");
+
+// calçadas
+polygon([[0,h*.58],[w*.43,h*.58],[w*.05,h],[0,h]],"#343b39");
+polygon([[w*.57,h*.58],[w,h*.58],[w,h],[w*.95,h]],"#343b39");
+
+// linhas da rua
+for(let i=0;i<5;i++){
+let z=((i/5+pos*.12)%1);
+let y=h*.58+z*z*h*.43;
+let x=w/2;
+let width=2+z*5;
+ctx.fillStyle="#788078";
+ctx.fillRect(x-width/2,y,width,Math.max(2,z*18));
+}
+
+// prédios
+for(let i=0;i<5;i++){
+let z=((i/5+pos*.09)%1);
+let scale=.18+z*.95;
+let lx=w*.12+z*w*.22-side*35*scale;
+let rx=w*.88-z*w*.22-side*35*scale;
+drawBuilding(lx,scale,true);
+drawBuilding(rx,scale,false);
+}
+
+// postes
+for(let i=0;i<3;i++){
+let z=((i/3+pos*.1)%1);
+let scale=.2+z*.9;
+drawLamp(w*.22-z*w*.14-side*25*scale,scale);
+drawLamp(w*.78+z*w*.14-side*25*scale,scale);
+}
+
+// neblina
+let fog=ctx.createLinearGradient(0,h*.48,0,h);
+fog.addColorStop(0,"#aab9bd00");
+fog.addColorStop(.5,"#aab9bd20");
+fog.addColorStop(1,"#aab9bd00");
+ctx.fillStyle=fog;
+ctx.fillRect(0,h*.45,w,h*.55);
+
+// vinheta
+let vignette=ctx.createRadialGradient(w/2,h/2,h*.1,w/2,h/2,h*.8);
+vignette.addColorStop(0,"#00000000");
+vignette.addColorStop(1,"#000000a8");
+ctx.fillStyle=vignette;
+ctx.fillRect(0,0,w,h);
+}
+
+function loop(){
+if(started){
+if(keys["w"]||keys["arrowup"])pos+=.012;
+if(keys["s"]||keys["arrowdown"])pos-=.008;
+if(keys["a"]||keys["arrowleft"])side=Math.max(-2,side-.025);
+if(keys["d"]||keys["arrowright"])side=Math.min(2,side+.025);
+}
+draw();
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
