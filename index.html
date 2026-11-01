@@ -4,194 +4,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>O ÚLTIMO SINAL — AB GAMES</title>
+<title>O ÚLTIMO SINAL | AB GAMES</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#05080d;color:white;font-family:Arial;overflow:hidden}
-canvas{display:block;width:100vw;height:100vh}
-#hud{position:fixed;top:18px;left:20px;z-index:2;text-shadow:0 2px 8px black}
-#hud h1{font-size:22px;letter-spacing:3px;margin:0;color:#b9d8e8}
-#hud p{font-size:12px;color:#c3cbd0}
-#help{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#07101dcc;padding:12px 18px;border:1px solid #60788766;border-radius:8px;text-align:center;font-size:13px}
-#start{position:fixed;inset:0;background:#02060bdc;display:flex;align-items:center;justify-content:center;z-index:5;text-align:center}
-#start div{padding:25px}
-#start h2{font-size:34px;letter-spacing:5px;color:#c6e6f5}
+body{margin:0;overflow:hidden;background:#05090e;font-family:Arial;color:white}
+canvas{display:block}
+#hud{position:fixed;top:18px;left:20px;pointer-events:none;text-shadow:0 2px 8px #000}
+#hud h1{font-size:22px;letter-spacing:4px;margin:0;color:#c4e5f5}
+#hud p{font-size:12px;color:#aebbc4}
+#help{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#07101ddd;border:1px solid #536b79;padding:12px 18px;border-radius:7px;font-size:13px;text-align:center}
+#screen{position:fixed;inset:0;background:#02060bdc;display:flex;align-items:center;justify-content:center;text-align:center}
+#screen div{padding:25px}
+#screen h2{font-size:34px;letter-spacing:5px;color:#c6e6f5}
 button{background:#18384b;color:white;border:1px solid #8ab4c9;padding:14px 28px;border-radius:5px;font-size:16px;cursor:pointer}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
 
 <div id="hud">
 <h1>O ÚLTIMO SINAL</h1>
 <p>AB GAMES apresenta...</p>
 </div>
 
-<div id="help">W A S D — MOVIMENTAR | ESC — PAUSAR</div>
+<div id="help">W A S D — ANDAR | MOUSE — OLHAR | ESC — PAUSAR</div>
 
-<div id="start">
+<div id="screen">
 <div>
 <h2>O ÚLTIMO SINAL</h2>
 <p>Uma cidade abandonada. Um sinal misterioso.</p>
-<p>Você está sozinho nesta rua...</p>
-<button onclick="startGame()">ENTRAR NA CIDADE</button>
+<p>Explore a rua e descubra o que aconteceu.</p>
+<button id="start">ENTRAR NA CIDADE</button>
 </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-let w,h,started=false;
-let pos=0,side=0;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080e17);
+scene.fog = new THREE.FogExp2(0x17232b, 0.018);
+
+const camera = new THREE.PerspectiveCamera(
+75, innerWidth/innerHeight, 0.1, 300
+);
+camera.position.set(0,1.7,12);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+document.body.appendChild(renderer.domElement);
+
+// LUZES
+scene.add(new THREE.HemisphereLight(0x9aafc2,0x171b1c,1.1));
+
+const moon = new THREE.DirectionalLight(0x9eb8d0,0.65);
+moon.position.set(-10,20,5);
+scene.add(moon);
+
+// CHAO E RUA
+function box(x,y,z,sx,sy,sz,color){
+const mesh = new THREE.Mesh(
+new THREE.BoxGeometry(sx,sy,sz),
+new THREE.MeshStandardMaterial({color,roughness:0.95})
+);
+mesh.position.set(x,y,z);
+scene.add(mesh);
+return mesh;
+}
+
+box(0,-0.3,0,100,0.5,300,0x343b38);
+box(0,-0.02,0,9,0.12,300,0x191e20);
+
+// CALCADAS
+box(-6.5,0,0,4,0.25,300,0x555b56);
+box(6.5,0,0,4,0.25,300,0x555b56);
+
+// PRÉDIOS PARADOS
+function building(x,z,seed){
+const height = 5 + (seed%3)*1.2;
+const width = 5 + (seed%2);
+const depth = 7;
+
+box(x,height/2,z,width,height,depth,0x292d2e);
+box(x,height+0.15,z,width+0.5,0.3,depth+0.5,0x151a1c);
+
+// Telhado
+box(x,height+0.4,z,width+0.8,0.25,depth+0.8,0x111719);
+
+// Janelas na frente
+for(let i=0;i<2;i++){
+for(let j=0;j<2;j++){
+const wx=x-width/2+1.2+j*2;
+const wy=1.8+i*2;
+box(wx,wy,z-depth/2-0.06,1,1.3,0x10191d);
+box(wx,wy,z-depth/2-0.09,0.08,1.4,0x343d40);
+}
+}
+
+// Porta
+box(x,1,z-depth/2-0.1,1.2,2,0x101416);
+}
+
+// Todos os prédios ficam fixos no cenário
+for(let i=0;i<12;i++){
+building(-10, -i*15-8, i);
+building(10, -i*15-8, i+1);
+}
+
+// POSTES FIXOS
+function lamp(x,z){
+box(x,3,z,0.15,6,0.15,0x171d20);
+box(x+0.7,5.8,z,1.5,0.12,0.12,0x171d20);
+
+const light = new THREE.PointLight(0xc4d7c4,1.4,12);
+light.position.set(x+0.7,5.5,z);
+scene.add(light);
+
+box(x+0.7,5.5,z,0.45,0.15,0.45,0xb2c5b2);
+}
+for(let i=0;i<8;i++){
+lamp(-5.1,-i*25);
+lamp(5.1,-i*25-12);
+}
+
+// CARRO ABANDONADO
+function car(x,z){
+box(x,0.8,z,2,1,4,0x292f32);
+box(x,1.5,z-0.2,1.7,0.65,2,0x171e23);
+for(let side of [-1,1]){
+for(let front of [-1,1]){
+const wheel = new THREE.Mesh(
+new THREE.CylinderGeometry(0.45,0.45,0.3,12),
+new THREE.MeshStandardMaterial({color:0x080909})
+);
+wheel.rotation.z=Math.PI/2;
+wheel.position.set(x+side*1,z+front*1.3,0.45);
+wheel.position.set(x+side*1,0.45,z+front*1.3);
+scene.add(wheel);
+}
+}
+}
+car(-2.5,-32);
+car(2.5,-75);
+
+// MOVIMENTO DO JOGADOR
+let yaw=0;
+let pitch=0;
+let locked=false;
 const keys={};
 
-function resize(){
-w=canvas.width=innerWidth;
-h=canvas.height=innerHeight;
-}
-addEventListener("resize",resize);
-resize();
+const screen=document.getElementById("screen");
 
-addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true;
-if(e.key==="Escape"&&started){
-started=false;
-document.getElementById("start").style.display="flex";
-}
+document.getElementById("start").onclick=()=>{
+renderer.domElement.requestPointerLock();
+};
+
+document.addEventListener("pointerlockchange",()=>{
+locked=document.pointerLockElement===renderer.domElement;
+screen.style.display=locked?"none":"flex";
 });
-addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-function startGame(){
-started=true;
-document.getElementById("start").style.display="none";
+document.addEventListener("mousemove",e=>{
+if(!locked)return;
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+pitch=Math.max(-1.2,Math.min(1.2,pitch));
+});
+
+document.addEventListener("keydown",e=>{
+keys[e.key.toLowerCase()]=true;
+});
+document.addEventListener("keyup",e=>{
+keys[e.key.toLowerCase()]=false;
+});
+
+const clock=new THREE.Clock();
+
+function animate(){
+requestAnimationFrame(animate);
+const delta=Math.min(clock.getDelta(),0.05);
+
+if(locked){
+const speed=7*delta;
+let forward=0;
+let right=0;
+
+if(keys["w"])forward+=1;
+if(keys["s"])forward-=1;
+if(keys["d"])right+=1;
+if(keys["a"])right-=1;
+
+const length=Math.hypot(forward,right)||1;
+forward/=length;
+right/=length;
+
+camera.position.x+=(
+Math.sin(yaw)*forward+
+Math.cos(yaw)*right
+)*speed;
+
+camera.position.z+=(
+-Math.cos(yaw)*forward+
+Math.sin(yaw)*right
+)*speed;
+
+// Limites da rua
+camera.position.x=Math.max(-4,Math.min(4,camera.position.x));
+camera.position.z=Math.min(14,Math.max(-175,camera.position.z));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+camera.position.y=1.7;
 }
 
-function polygon(points,color){
-ctx.fillStyle=color;
-ctx.beginPath();
-ctx.moveTo(points[0][0],points[0][1]);
-for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
-ctx.closePath();
-ctx.fill();
+renderer.render(scene,camera);
 }
 
-function drawBuilding(x,scale,left){
-let base=h*.64;
-let bw=w*.22*scale;
-let bh=h*.48*scale;
-let bx=x-bw/2;
-let by=base-bh;
-let wall=left?"#171d20":"#202326";
-polygon([[bx,by],[bx+bw,by],[bx+bw,base],[bx,base]],wall);
-polygon([[bx,by],[bx+bw*.18,by-bh*.13],[bx+bw*1.18,by-bh*.13],[bx+bw,by]],"#101619");
-polygon([[bx+bw,by],[bx+bw*1.18,by-bh*.13],[bx+bw*1.18,base-bh*.13],[bx+bw,base]],"#111719");
-for(let i=0;i<3;i++){
-let wx=bx+bw*(.18+i*.3);
-let wy=by+bh*.28;
-ctx.fillStyle="#080e12";
-ctx.fillRect(wx,wy,bw*.13,bh*.2);
-ctx.fillStyle="#26343a";
-ctx.fillRect(wx+2,wy+2,bw*.13-4,bh*.2-4);
-}
-polygon([[bx+bw*.4,base-bh*.3],[bx+bw*.62,base-bh*.3],[bx+bw*.62,base],[bx+bw*.4,base]],"#080b0d");
-}
+animate();
 
-function drawLamp(x,scale){
-let top=h*.24;
-let bottom=h*.66;
-ctx.strokeStyle="#11191d";
-ctx.lineWidth=Math.max(2,5*scale);
-ctx.beginPath();
-ctx.moveTo(x,bottom);
-ctx.lineTo(x,top);
-ctx.lineTo(x+w*.035*scale,top);
-ctx.stroke();
-ctx.fillStyle="#a6b9b9";
-ctx.fillRect(x+w*.025*scale,top-3,12*scale,6*scale);
-ctx.fillStyle="#d4e2ce";
-ctx.globalAlpha=.55;
-ctx.beginPath();
-ctx.arc(x+w*.03*scale,top,30*scale,0,Math.PI*2);
-ctx.fill();
-ctx.globalAlpha=1;
-}
-
-function draw(){
-ctx.fillStyle="#080e15";
-ctx.fillRect(0,0,w,h);
-
-// céu
-let sky=ctx.createLinearGradient(0,0,0,h*.7);
-sky.addColorStop(0,"#050a12");
-sky.addColorStop(1,"#26333a");
-ctx.fillStyle=sky;
-ctx.fillRect(0,0,w,h*.7);
-
-// chão
-polygon([[0,h*.58],[w,h*.58],[w,h],[0,h]],"#252a29");
-
-// rua em perspectiva
-polygon([[w*.43,h*.58],[w*.57,h*.58],[w*.95,h],[w*.05,h]],"#171c1e");
-
-// calçadas
-polygon([[0,h*.58],[w*.43,h*.58],[w*.05,h],[0,h]],"#343b39");
-polygon([[w*.57,h*.58],[w,h*.58],[w,h],[w*.95,h]],"#343b39");
-
-// linhas da rua
-for(let i=0;i<5;i++){
-let z=((i/5+pos*.12)%1);
-let y=h*.58+z*z*h*.43;
-let x=w/2;
-let width=2+z*5;
-ctx.fillStyle="#788078";
-ctx.fillRect(x-width/2,y,width,Math.max(2,z*18));
-}
-
-// prédios
-for(let i=0;i<5;i++){
-let z=((i/5+pos*.09)%1);
-let scale=.18+z*.95;
-let lx=w*.12+z*w*.22-side*35*scale;
-let rx=w*.88-z*w*.22-side*35*scale;
-drawBuilding(lx,scale,true);
-drawBuilding(rx,scale,false);
-}
-
-// postes
-for(let i=0;i<3;i++){
-let z=((i/3+pos*.1)%1);
-let scale=.2+z*.9;
-drawLamp(w*.22-z*w*.14-side*25*scale,scale);
-drawLamp(w*.78+z*w*.14-side*25*scale,scale);
-}
-
-// neblina
-let fog=ctx.createLinearGradient(0,h*.48,0,h);
-fog.addColorStop(0,"#aab9bd00");
-fog.addColorStop(.5,"#aab9bd20");
-fog.addColorStop(1,"#aab9bd00");
-ctx.fillStyle=fog;
-ctx.fillRect(0,h*.45,w,h*.55);
-
-// vinheta
-let vignette=ctx.createRadialGradient(w/2,h/2,h*.1,w/2,h/2,h*.8);
-vignette.addColorStop(0,"#00000000");
-vignette.addColorStop(1,"#000000a8");
-ctx.fillStyle=vignette;
-ctx.fillRect(0,0,w,h);
-}
-
-function loop(){
-if(started){
-if(keys["w"]||keys["arrowup"])pos+=.012;
-if(keys["s"]||keys["arrowdown"])pos-=.008;
-if(keys["a"]||keys["arrowleft"])side=Math.max(-2,side-.025);
-if(keys["d"]||keys["arrowright"])side=Math.min(2,side+.025);
-}
-draw();
-requestAnimationFrame(loop);
-}
-loop();
+addEventListener("resize",()=>{
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth,innerHeight);
+});
 </script>
 </body>
 </html>
