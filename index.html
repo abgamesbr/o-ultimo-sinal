@@ -4,229 +4,180 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>O ÚLTIMO SINAL | AB GAMES</title>
+<title>AB GAMES - O Último Sinal</title>
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;overflow:hidden;background:#05090e;font-family:Arial;color:white}
-canvas{display:block}
-#hud{position:fixed;top:18px;left:20px;pointer-events:none;text-shadow:0 2px 8px #000}
-#hud h1{font-size:22px;letter-spacing:4px;margin:0;color:#c4e5f5}
-#hud p{font-size:12px;color:#aebbc4}
-#help{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#07101ddd;border:1px solid #536b79;padding:12px 18px;border-radius:7px;font-size:13px;text-align:center}
-#screen{position:fixed;inset:0;background:#02060bdc;display:flex;align-items:center;justify-content:center;text-align:center}
-#screen div{padding:25px}
-#screen h2{font-size:34px;letter-spacing:5px;color:#c6e6f5}
-button{background:#18384b;color:white;border:1px solid #8ab4c9;padding:14px 28px;border-radius:5px;font-size:16px;cursor:pointer}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  overflow: hidden;
+  background: #050505;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.fundo {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,.45), #050505),
+    radial-gradient(ellipse at center, #333 0%, #111 45%, #030303 100%);
+  overflow: hidden;
+}
+
+.nevoa {
+  position: absolute;
+  width: 150%;
+  height: 100%;
+  left: -25%;
+  bottom: -20%;
+  background: radial-gradient(ellipse, rgba(110,110,110,.16), transparent 65%);
+  filter: blur(35px);
+  animation: nevoa 9s ease-in-out infinite alternate;
+}
+
+@keyframes nevoa {
+  from { transform: translateX(-5%); }
+  to { transform: translateX(5%); }
+}
+
+.conteudo {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 35px 20px 35px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 19px;
+  font-weight: bold;
+  letter-spacing: 7px;
+  color: #aaa;
+}
+
+.logo span {
+  color: #b90000;
+}
+
+.titulo {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.titulo h1 {
+  font-size: clamp(38px, 8vw, 76px);
+  letter-spacing: 5px;
+  color: #e5e5e5;
+  text-shadow: 0 0 18px rgba(180,0,0,.55);
+}
+
+.titulo p {
+  margin-top: 18px;
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: #999;
+}
+
+.menu {
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+button {
+  background: rgba(20,20,20,.85);
+  color: white;
+  border: 1px solid #555;
+  padding: 15px;
+  font-size: 15px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: .3s;
+}
+
+button:hover {
+  background: #790000;
+  border-color: #d00000;
+  transform: scale(1.05);
+}
+
+.jogar {
+  border-color: #a00000;
+  background: rgba(100,0,0,.35);
+}
+
+.rodape {
+  color: #555;
+  font-size: 10px;
+  letter-spacing: 3px;
+  margin-top: 20px;
+}
+
+#mensagem {
+  color: #c9c9c9;
+  font-size: 12px;
+  min-height: 16px;
+}
 </style>
 </head>
+
 <body>
 
-<div id="hud">
-<h1>O ÚLTIMO SINAL</h1>
-<p>AB GAMES apresenta...</p>
+<div class="fundo">
+  <div class="nevoa"></div>
 </div>
 
-<div id="help">W A S D — ANDAR | MOUSE — OLHAR | ESC — PAUSAR</div>
+<main class="conteudo">
 
-<div id="screen">
-<div>
-<h2>O ÚLTIMO SINAL</h2>
-<p>Uma cidade abandonada. Um sinal misterioso.</p>
-<p>Explore a rua e descubra o que aconteceu.</p>
-<button id="start">ENTRAR NA CIDADE</button>
-</div>
-</div>
+  <div class="logo">
+    AB <span>GAMES</span>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <section class="titulo">
+    <h1>O ÚLTIMO<br>SINAL</h1>
+    <p>NEM TODO SINAL DEVE SER SEGUIDO...</p>
+  </section>
+
+  <section class="menu">
+    <button class="jogar" onclick="jogar()">JOGAR</button>
+    <button onclick="opcoes()">OPÇÕES</button>
+    <button onclick="creditos()">CRÉDITOS</button>
+    <div id="mensagem"></div>
+  </section>
+
+  <div class="rodape">
+    AB GAMES © 2026
+  </div>
+
+</main>
+
 <script>
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x080e17);
-scene.fog = new THREE.FogExp2(0x17232b, 0.018);
-
-const camera = new THREE.PerspectiveCamera(
-75, innerWidth/innerHeight, 0.1, 300
-);
-camera.position.set(0,1.7,12);
-
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
-document.body.appendChild(renderer.domElement);
-
-// LUZES
-scene.add(new THREE.HemisphereLight(0x9aafc2,0x171b1c,1.1));
-
-const moon = new THREE.DirectionalLight(0x9eb8d0,0.65);
-moon.position.set(-10,20,5);
-scene.add(moon);
-
-// CHAO E RUA
-function box(x,y,z,sx,sy,sz,color){
-const mesh = new THREE.Mesh(
-new THREE.BoxGeometry(sx,sy,sz),
-new THREE.MeshStandardMaterial({color,roughness:0.95})
-);
-mesh.position.set(x,y,z);
-scene.add(mesh);
-return mesh;
+function jogar() {
+  document.getElementById("mensagem").textContent =
+    "A SUA HISTÓRIA COMEÇA EM BREVE...";
 }
 
-box(0,-0.3,0,100,0.5,300,0x343b38);
-box(0,-0.02,0,9,0.12,300,0x191e20);
-
-// CALCADAS
-box(-6.5,0,0,4,0.25,300,0x555b56);
-box(6.5,0,0,4,0.25,300,0x555b56);
-
-// PRÉDIOS PARADOS
-function building(x,z,seed){
-const height = 5 + (seed%3)*1.2;
-const width = 5 + (seed%2);
-const depth = 7;
-
-box(x,height/2,z,width,height,depth,0x292d2e);
-box(x,height+0.15,z,width+0.5,0.3,depth+0.5,0x151a1c);
-
-// Telhado
-box(x,height+0.4,z,width+0.8,0.25,depth+0.8,0x111719);
-
-// Janelas na frente
-for(let i=0;i<2;i++){
-for(let j=0;j<2;j++){
-const wx=x-width/2+1.2+j*2;
-const wy=1.8+i*2;
-box(wx,wy,z-depth/2-0.06,1,1.3,0x10191d);
-box(wx,wy,z-depth/2-0.09,0.08,1.4,0x343d40);
-}
+function opcoes() {
+  document.getElementById("mensagem").textContent =
+    "OPÇÕES EM DESENVOLVIMENTO";
 }
 
-// Porta
-box(x,1,z-depth/2-0.1,1.2,2,0x101416);
+function creditos() {
+  document.getElementById("mensagem").textContent =
+    "DESENVOLVIDO POR AB GAMES";
 }
-
-// Todos os prédios ficam fixos no cenário
-for(let i=0;i<12;i++){
-building(-10, -i*15-8, i);
-building(10, -i*15-8, i+1);
-}
-
-// POSTES FIXOS
-function lamp(x,z){
-box(x,3,z,0.15,6,0.15,0x171d20);
-box(x+0.7,5.8,z,1.5,0.12,0.12,0x171d20);
-
-const light = new THREE.PointLight(0xc4d7c4,1.4,12);
-light.position.set(x+0.7,5.5,z);
-scene.add(light);
-
-box(x+0.7,5.5,z,0.45,0.15,0.45,0xb2c5b2);
-}
-for(let i=0;i<8;i++){
-lamp(-5.1,-i*25);
-lamp(5.1,-i*25-12);
-}
-
-// CARRO ABANDONADO
-function car(x,z){
-box(x,0.8,z,2,1,4,0x292f32);
-box(x,1.5,z-0.2,1.7,0.65,2,0x171e23);
-for(let side of [-1,1]){
-for(let front of [-1,1]){
-const wheel = new THREE.Mesh(
-new THREE.CylinderGeometry(0.45,0.45,0.3,12),
-new THREE.MeshStandardMaterial({color:0x080909})
-);
-wheel.rotation.z=Math.PI/2;
-wheel.position.set(x+side*1,z+front*1.3,0.45);
-wheel.position.set(x+side*1,0.45,z+front*1.3);
-scene.add(wheel);
-}
-}
-}
-car(-2.5,-32);
-car(2.5,-75);
-
-// MOVIMENTO DO JOGADOR
-let yaw=0;
-let pitch=0;
-let locked=false;
-const keys={};
-
-const screen=document.getElementById("screen");
-
-document.getElementById("start").onclick=()=>{
-renderer.domElement.requestPointerLock();
-};
-
-document.addEventListener("pointerlockchange",()=>{
-locked=document.pointerLockElement===renderer.domElement;
-screen.style.display=locked?"none":"flex";
-});
-
-document.addEventListener("mousemove",e=>{
-if(!locked)return;
-yaw-=e.movementX*0.002;
-pitch-=e.movementY*0.002;
-pitch=Math.max(-1.2,Math.min(1.2,pitch));
-});
-
-document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true;
-});
-document.addEventListener("keyup",e=>{
-keys[e.key.toLowerCase()]=false;
-});
-
-const clock=new THREE.Clock();
-
-function animate(){
-requestAnimationFrame(animate);
-const delta=Math.min(clock.getDelta(),0.05);
-
-if(locked){
-const speed=7*delta;
-let forward=0;
-let right=0;
-
-if(keys["w"])forward+=1;
-if(keys["s"])forward-=1;
-if(keys["d"])right+=1;
-if(keys["a"])right-=1;
-
-const length=Math.hypot(forward,right)||1;
-forward/=length;
-right/=length;
-
-camera.position.x+=(
-Math.sin(yaw)*forward+
-Math.cos(yaw)*right
-)*speed;
-
-camera.position.z+=(
--Math.cos(yaw)*forward+
-Math.sin(yaw)*right
-)*speed;
-
-// Limites da rua
-camera.position.x=Math.max(-4,Math.min(4,camera.position.x));
-camera.position.z=Math.min(14,Math.max(-175,camera.position.z));
-
-camera.rotation.order="YXZ";
-camera.rotation.y=yaw;
-camera.rotation.x=pitch;
-camera.position.y=1.7;
-}
-
-renderer.render(scene,camera);
-}
-
-animate();
-
-addEventListener("resize",()=>{
-camera.aspect=innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
-});
 </script>
+
 </body>
 </html>
