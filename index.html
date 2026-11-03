@@ -22,12 +22,10 @@ body {
 }
 
 .fundo {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background:
-    linear-gradient(to bottom, rgba(0,0,0,.45), #050505),
-    radial-gradient(ellipse at center, #333 0%, #111 45%, #030303 100%);
-  overflow: hidden;
+    radial-gradient(ellipse at center, #303030 0%, #111 48%, #030303 100%);
 }
 
 .nevoa {
@@ -54,7 +52,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 35px 20px 35px;
+  padding: 35px 20px;
   text-align: center;
 }
 
@@ -84,24 +82,28 @@ body {
 .titulo p {
   margin-top: 18px;
   font-size: 13px;
-  letter-spacing: 4px;
+  letter-spacing: 3px;
   color: #999;
 }
 
+.menu, #painelOpcoes {
+  width: min(300px, 90vw);
+}
+
 .menu {
-  width: 230px;
   display: flex;
   flex-direction: column;
   gap: 13px;
 }
 
 button {
+  width: 100%;
   background: rgba(20,20,20,.85);
   color: white;
   border: 1px solid #555;
   padding: 15px;
   font-size: 15px;
-  letter-spacing: 4px;
+  letter-spacing: 3px;
   cursor: pointer;
   transition: .3s;
 }
@@ -109,7 +111,7 @@ button {
 button:hover {
   background: #790000;
   border-color: #d00000;
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .jogar {
@@ -117,17 +119,52 @@ button:hover {
   background: rgba(100,0,0,.35);
 }
 
-.rodape {
-  color: #555;
-  font-size: 10px;
-  letter-spacing: 3px;
-  margin-top: 20px;
+#painelOpcoes {
+  display: none;
+  background: rgba(10,10,10,.88);
+  border: 1px solid #5c0000;
+  padding: 22px;
+}
+
+#painelOpcoes h2 {
+  margin-bottom: 22px;
+  letter-spacing: 5px;
+  color: #d5d5d5;
+}
+
+.configuracao {
+  margin: 18px 0;
+  text-align: left;
+  color: #bbb;
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+input[type="range"], select {
+  width: 100%;
+  margin-top: 12px;
+  accent-color: #a00000;
+}
+
+select {
+  padding: 10px;
+  color: white;
+  background: #191919;
+  border: 1px solid #555;
 }
 
 #mensagem {
   color: #c9c9c9;
   font-size: 12px;
   min-height: 16px;
+  margin-top: 8px;
+}
+
+.rodape {
+  color: #555;
+  font-size: 10px;
+  letter-spacing: 3px;
+  margin-top: 20px;
 }
 </style>
 </head>
@@ -149,11 +186,36 @@ button:hover {
     <p>NEM TODO SINAL DEVE SER SEGUIDO...</p>
   </section>
 
-  <section class="menu">
+  <section class="menu" id="menuPrincipal">
     <button class="jogar" onclick="jogar()">JOGAR</button>
     <button onclick="opcoes()">OPÇÕES</button>
     <button onclick="creditos()">CRÉDITOS</button>
     <div id="mensagem"></div>
+  </section>
+
+  <section id="painelOpcoes">
+    <h2>OPÇÕES</h2>
+
+    <div class="configuracao">
+      VOLUME
+      <input id="volume" type="range" min="0" max="100" value="50">
+    </div>
+
+    <div class="configuracao">
+      SENSIBILIDADE
+      <input id="sensibilidade" type="range" min="1" max="100" value="50">
+    </div>
+
+    <div class="configuracao">
+      QUALIDADE GRÁFICA
+      <select id="qualidade">
+        <option value="baixa">BAIXA</option>
+        <option value="media" selected>MÉDIA</option>
+        <option value="alta">ALTA</option>
+      </select>
+    </div>
+
+    <button onclick="voltarMenu()">VOLTAR</button>
   </section>
 
   <div class="rodape">
@@ -169,8 +231,14 @@ function jogar() {
 }
 
 function opcoes() {
-  document.getElementById("mensagem").textContent =
-    "OPÇÕES EM DESENVOLVIMENTO";
+  document.getElementById("menuPrincipal").style.display = "none";
+  document.getElementById("painelOpcoes").style.display = "block";
+  document.getElementById("mensagem").textContent = "";
+}
+
+function voltarMenu() {
+  document.getElementById("painelOpcoes").style.display = "none";
+  document.getElementById("menuPrincipal").style.display = "flex";
 }
 
 function creditos() {
